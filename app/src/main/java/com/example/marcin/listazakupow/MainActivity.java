@@ -1,7 +1,9 @@
 package com.example.marcin.listazakupow;
 
 import android.app.ListActivity;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
@@ -20,10 +22,12 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 
 import com.google.gson.Gson;
 
@@ -40,15 +44,23 @@ import static java.lang.String.valueOf;
 
 public class MainActivity extends ListActivity {
 
+
+    //preferencje do ilosci produktow na liscie i sumie
+    SharedPreferences sharedPref2;
+    SharedPreferences.Editor editor2;
+
+    // preferencje do przenoszenia danych
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
     Context context;
     ListAdapter adapter;
 
     private String[] nazwaProduktu = new String[50];
-    private double[] cenaProduktu = new double[50];
+    private float cenaProduktu;
     private String[] opisProduktu = new String[50];
-    private int licznikProduktow = 0;
+    private int licznikProduktow;
+    private float suma;
+    private String[] cenaTowarow = new String[50];
 
     // wezel rodzica
     private final String KEY_RECORD = "record";
@@ -63,17 +75,34 @@ public class MainActivity extends ListActivity {
 
     private String url = "http://v-ie.uek.krakow.pl/~s185868/produktyy.xml";
 
+    private ProgressDialog pd;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        context = getApplicationContext();
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        sharedPref = this.getSharedPreferences("DANE", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
+
+//        sharedPref2 = this.getSharedPreferences("ILOSC", Context.MODE_PRIVATE);
+//        editor2 = sharedPref2.edit();
+
+        licznikProduktow = sharedPref.getInt("ilosc", 0);
+        TextView textView = (TextView) findViewById(R.id.textView13);
+        textView.setText(valueOf(licznikProduktow));
+
+        suma = sharedPref.getFloat("suma", 0);
+        textView = (TextView) findViewById(R.id.textView9);
+        textView.setText(valueOf(suma));
 
 
         new ReadXMLTask().execute(url);
+    }
+
+    public void idzDoTwojaLista(View view) {
+        Intent intent = new Intent(this, TwojaLista.class);
+        startActivity(intent);
     }
 
     private class ReadXMLTask extends AsyncTask<String, Void, String> {
@@ -82,7 +111,10 @@ public class MainActivity extends ListActivity {
         // co sie dzieje przed pobieraniem danych
         @Override
         protected void onPreExecute() {
+
             super.onPreExecute();
+
+            pd = ProgressDialog.show(MainActivity.this, "Lista produktów", "Pobieranie danych...");
         }
 
 
@@ -157,6 +189,8 @@ public class MainActivity extends ListActivity {
                     new String[] { KEY_DESCRIPTION, KEY_OPIS, KEY_PRICE }, new int[] {R.id.przedmiot, R.id.opis, R.id.cena});
 
             MainActivity.this.setListAdapter(adapter);
+
+            pd.dismiss();
         }
     }
 
@@ -170,21 +204,68 @@ public class MainActivity extends ListActivity {
 
         ConstraintLayout vwParentRow = (ConstraintLayout)v.getParent();
 
+        // zmiana poszczególnych wartości TextView
         TextView nazwaProduktuTV = (TextView)vwParentRow.getChildAt(0);
         TextView opisProduktuTV = (TextView)vwParentRow.getChildAt(1);
         TextView iloscProduktu = (TextView)vwParentRow.getChildAt(4);
+        TextView cenaProduktuTV = (TextView)vwParentRow.getChildAt(3);
+
         nazwaProduktu[licznikProduktow] = nazwaProduktuTV.getText().toString();
         opisProduktu[licznikProduktow] = opisProduktuTV.getText().toString();
+        cenaTowarow[licznikProduktow] = cenaProduktuTV.getText().toString();
+        String cena = cenaProduktuTV.getText().toString();
+        //cenaProduktu[0] = opisProduktuTV.getText().toString();
         String iloscET = iloscProduktu.getText().toString();
+
+        // sumowanie ceny produktów
+        cenaProduktu = Float.parseFloat(cena);
+        suma = suma + cenaProduktu;
+        //cenaProduktuTV.setText(valueOf(cenaProduktu[1]));
+
+        // liczenie ilość oraz konwersja na double żeby zwiększyć o jeden
         int value= Integer.parseInt(iloscET);
         value ++;
         iloscProduktu.setText(valueOf(value));
 //        child2.setText(nazwa);
 //        child.setText(dane);
 
+        licznikProduktow++;
+
+        // DOLNY PASEK TEXT VIEW
+
+        TextView iloscDol = (TextView) findViewById(R.id.textView13);
+        TextView sumaDol = (TextView) findViewById(R.id.textView9);
+        iloscDol.setText(valueOf(licznikProduktow));
+        sumaDol.setText(valueOf(suma));
+
+        // ZAPIS DO SHARED PREFERENCES
+
+        editor.putFloat("suma", suma);
+        editor.putInt("ilosc", licznikProduktow);
+
+
+        editor.putString("nazwaProduktu"+licznikProduktow, nazwaProduktu[licznikProduktow-1]);
+        editor.putString("opisProduktu"+licznikProduktow, opisProduktu[licznikProduktow-1]);
+        editor.putString("cenaTowarow"+licznikProduktow, cenaTowarow[licznikProduktow-1]);
+
+        editor.commit();
+
+
         int c = Color.CYAN;
 
         //vwParentRow.setBackgroundColor(c);
         vwParentRow.refreshDrawableState();
+
+        {
+            Context context = getApplicationContext();
+            CharSequence text = "Produkt dodany do listy!";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
+
+
+
     }
 }
