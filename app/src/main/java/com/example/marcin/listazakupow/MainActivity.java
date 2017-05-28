@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.provider.DocumentsContract;
@@ -45,6 +46,7 @@ import static java.lang.String.valueOf;
 public class MainActivity extends ListActivity {
 
 
+    MediaPlayer mediaPlayer;
     //preferencje do ilosci produktow na liscie i sumie
     SharedPreferences sharedPref2;
     SharedPreferences.Editor editor2;
@@ -77,6 +79,8 @@ public class MainActivity extends ListActivity {
 
     private ProgressDialog pd;
 
+    private java.text.DecimalFormat df;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,6 +88,10 @@ public class MainActivity extends ListActivity {
 
         sharedPref = this.getSharedPreferences("DANE", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
+
+        df=new java.text.DecimalFormat();
+        df.setMaximumFractionDigits(2); //dla df ustawiamy największą ilość miejsc po przecinku
+        df.setMinimumFractionDigits(2);
 
 //        sharedPref2 = this.getSharedPreferences("ILOSC", Context.MODE_PRIVATE);
 //        editor2 = sharedPref2.edit();
@@ -94,7 +102,7 @@ public class MainActivity extends ListActivity {
 
         suma = sharedPref.getFloat("suma", 0);
         textView = (TextView) findViewById(R.id.textView9);
-        textView.setText(valueOf(suma));
+        textView.setText(valueOf(df.format(suma)) + " zł");
 
 
         new ReadXMLTask().execute(url);
@@ -236,7 +244,7 @@ public class MainActivity extends ListActivity {
         TextView iloscDol = (TextView) findViewById(R.id.textView13);
         TextView sumaDol = (TextView) findViewById(R.id.textView9);
         iloscDol.setText(valueOf(licznikProduktow));
-        sumaDol.setText(valueOf(suma));
+        sumaDol.setText(valueOf(df.format(suma)) + " zł");
 
         // ZAPIS DO SHARED PREFERENCES
 

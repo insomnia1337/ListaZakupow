@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -21,6 +22,15 @@ public class MenuGlowne extends AppCompatActivity {
     Context context;
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
+
+    SharedPreferences sharedPref2;
+    SharedPreferences.Editor editor2;
+
+    MediaPlayer mediaPlayer;
+
+    float sumaZakupow;
+    int iloscProduktow;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,7 +40,25 @@ public class MenuGlowne extends AppCompatActivity {
         sharedPref = this.getSharedPreferences("DANE", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
 
+        sharedPref2 = getSharedPreferences("STATYSTYKA", Context.MODE_PRIVATE);
+        editor2 = sharedPref2.edit();
+
+//        mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.music);
+//
+//        mediaPlayer.start();
+//        mediaPlayer.setLooping(true);
+
     }
+
+
+
+
+//    @Override
+//    protected void onPause(){
+//        mediaPlayer.stop();
+//        mediaPlayer.release();
+//
+//    }
 
     public boolean isOnline() {
         ConnectivityManager cm =
@@ -71,7 +99,31 @@ public class MenuGlowne extends AppCompatActivity {
     }
 
     public void wyczyscListy(View view) {
+        sumaZakupow = sharedPref.getFloat("suma", 0);
+        iloscProduktow = sharedPref.getInt("ilosc", 0);
+
+        float sumaZakupow2 = sharedPref2.getFloat("suma", 0) + sumaZakupow;
+        int iloscProduktow2 = sharedPref2.getInt("ilosc", 0) + iloscProduktow;
+        editor2.putFloat("suma", sumaZakupow2);
+        editor2.putInt("ilosc", iloscProduktow2);
+
+
         editor.clear();
+        editor2.commit();
         editor.commit();
+
+        {
+            Context context = getApplicationContext();
+            CharSequence text = "Lista zakupów została wyczyszczona.";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
+    }
+
+    public void idzDoStatystyki(View view) {
+        Intent intent = new Intent(this, Statystyka.class);
+        startActivity(intent);
     }
 }

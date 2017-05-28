@@ -39,6 +39,9 @@ public class TwojaLista  extends AppCompatActivity  {
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
 
+    SharedPreferences sharedPref2;
+    SharedPreferences.Editor editor2;
+
     TextView textView;
 
     private String[] nazwaProduktu = new String[50];
@@ -50,10 +53,8 @@ public class TwojaLista  extends AppCompatActivity  {
     private ListView list;
     private BaseAdapter adapter ;
 
+    java.text.DecimalFormat df;
 
-
-
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_twoja_lista);
@@ -61,8 +62,15 @@ public class TwojaLista  extends AppCompatActivity  {
         sharedPref = getSharedPreferences("DANE", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
 
+        sharedPref2 = getSharedPreferences("STATYSTYKA", Context.MODE_PRIVATE);
+        editor2 = sharedPref2.edit();
+
         sumaZakupow = sharedPref.getFloat("suma", 0);
         iloscProduktow = sharedPref.getInt("ilosc", 0);
+
+        df=new java.text.DecimalFormat();
+        df.setMaximumFractionDigits(2); //dla df ustawiamy największą ilość miejsc po przecinku
+        df.setMinimumFractionDigits(2);
 
 
         for(int i=0; i<=iloscProduktow; i++){
@@ -93,7 +101,7 @@ public class TwojaLista  extends AppCompatActivity  {
         textView = (TextView) findViewById(R.id.textView15);
         textView.setText(valueOf(iloscProduktow));
         textView = (TextView) findViewById(R.id.textView17);
-        textView.setText(valueOf(sumaZakupow));
+        textView.setText(valueOf(df.format(sumaZakupow)) + " zł");
 
 
     }
@@ -154,7 +162,7 @@ public class TwojaLista  extends AppCompatActivity  {
         textView = (TextView) findViewById(R.id.textView15);
         textView.setText(valueOf(iloscProduktow));
         textView = (TextView) findViewById(R.id.textView17);
-        textView.setText(valueOf(sumaZakupow));
+        textView.setText(valueOf(df.format(sumaZakupow)) + " zł");
 
         editor.remove("nazwaProduktu"+(position+1));
         editor.remove("cenaTowarow"+(position+1));
@@ -184,11 +192,19 @@ public class TwojaLista  extends AppCompatActivity  {
 
 
     public void wyczysc(View view) {
+        float sumaZakupow2 = sharedPref2.getFloat("suma", 0) + sumaZakupow;
+        int iloscProduktow2 = sharedPref2.getInt("ilosc", 0) + iloscProduktow;
+
+        editor2.putFloat("suma", sumaZakupow2);
+        editor2.putInt("ilosc", iloscProduktow2);
+
+
         editor.clear();
+        editor2.commit();
         editor.commit();
+
         finish();
         startActivity(getIntent());
-
 
     }
 }
